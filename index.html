@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ポケポケ対戦確率計算シミュレーター(β)</title>
+<style>
+  :root{
+    --bg:#f5f7fb;--card:#fff;--ink:#172033;--muted:#65708a;--line:#dfe4ee;
+    --accent:#5a67f2;--accent2:#eef0ff;--good:#11845b;--bad:#b33a3a;--soft:#f8f9fc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;line-height:1.55}
+  .wrap{max-width:1120px;margin:0 auto;padding:24px 14px 60px}
+  h1{font-size:clamp(24px,4vw,38px);margin:0 0 8px}h2{font-size:20px;margin:0 0 12px}h3{font-size:16px;margin:18px 0 8px}
+  p{margin:6px 0}.lead{color:var(--muted);margin-bottom:18px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 8px 30px rgba(33,45,80,.05)}
+  .topbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}.count{font-weight:900}.count.ok{color:var(--good)}.count.ng{color:var(--bad)}
+  button{border:0;border-radius:12px;padding:11px 14px;min-height:44px;font-weight:800;cursor:pointer;background:var(--accent);color:#fff}button.secondary{background:#edf0f6;color:var(--ink)}button.danger{background:#fff0f0;color:#a12d2d}button:disabled{opacity:.45;cursor:not-allowed}
+  .grid{display:grid;grid-template-columns:1.6fr .7fr .9fr auto;gap:8px;align-items:center}.header{font-size:12px;color:var(--muted);font-weight:800;padding:0 6px}
+  .qty-buttons{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-width:0}.qty-btn{min-height:44px;padding:8px 6px;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;font-size:14px;font-weight:900}.qty-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}.qty-btn:focus{outline:3px solid #cfd4ff;outline-offset:1px}
+  input,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;color:var(--ink);font-size:16px;min-height:44px}input:focus,select:focus,button:focus{outline:3px solid #cfd4ff;outline-offset:1px}
+  .remove{padding:9px 11px;background:#f2f4f8;color:#7d2630}.badge{display:inline-block;border-radius:999px;padding:3px 8px;font-size:12px;font-weight:800;background:var(--accent2);color:#414cbc}.special-note,.tiny{font-size:12px;color:var(--muted)}
+  .settings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.box{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px;display:block}.box>span:first-child{display:block;font-size:12px;color:var(--muted);font-weight:800;margin-bottom:5px}
+  .switches{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.target-panel{margin-top:10px;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px}.target-panel-head{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.target-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.target-check{display:flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 10px;min-width:0}.target-check input{width:18px;height:18px;min-height:auto;flex:0 0 auto}.target-check span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.target-empty{font-size:13px;color:var(--muted);padding:6px 2px}.mini-actions{display:flex;gap:6px;flex-wrap:wrap}.mini-actions button{min-height:36px;padding:7px 10px;font-size:12px}.toggle{display:flex;gap:9px;align-items:flex-start;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px;font-weight:750}.toggle input{width:20px;height:20px;min-height:auto;margin-top:2px}.toggle small{display:block;color:var(--muted);font-weight:500}
+  .results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.metric{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fbfcff}.metric.primary{border-color:#bfc6ff;background:#f7f8ff}.metric .name{font-size:13px;color:var(--muted);font-weight:800}.metric .value{font-size:30px;font-weight:900;letter-spacing:-.02em;margin-top:4px}.metric .sub{font-size:12px;color:var(--muted)}
+  .bar{height:9px;background:#e9edf5;border-radius:999px;overflow:hidden;margin-top:10px}.fill{height:100%;background:var(--accent);width:0}.status{font-weight:800;margin-top:8px}.status.good{color:var(--good)}.status.bad{color:var(--bad)}
+  .flow{padding:12px;border-left:4px solid var(--accent);background:#f8f9ff;border-radius:8px;margin-top:12px}.flow strong{display:block;margin-bottom:3px}
+  details{margin-top:12px}summary{cursor:pointer;font-weight:800}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .compare-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}.compare{width:100%;border-collapse:collapse;min-width:700px}.compare th,.compare td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}.compare th{font-size:12px;color:var(--muted);background:var(--soft)}.compare td.rate{font-weight:900;font-variant-numeric:tabular-nums}.compare tr:last-child td{border-bottom:0}.compare .best{color:var(--good)}
+  .example-box{margin-top:18px;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fbfcff}.example-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}.example-head h3{margin:0 0 4px}.example-result{margin:12px 0 8px;padding:10px 12px;border-radius:10px;font-weight:900}.example-result.good{background:#edf9f4;color:var(--good)}.example-result.bad{background:#fff1f1;color:var(--bad)}.example-steps{display:grid;gap:8px}.example-step{border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:#fff}.example-step-title{font-weight:900}.example-step-detail{font-size:13px;color:var(--muted);margin-top:2px}.example-hand{font-size:13px;margin-top:6px;word-break:break-word}.example-hand strong{color:var(--ink)}.example-target{font-size:12px;font-weight:800;margin-top:5px}.example-target.done{color:var(--good)}
+  .site-footer{margin:24px 0 0;padding:18px 8px 4px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:12px}.site-footer p{margin:3px 0}
+  .hidden{display:none!important}
+  @media(max-width:760px){.grid{grid-template-columns:1fr 94px 110px auto;gap:6px}.header{font-size:10px}.settings,.results,.switches,.target-list{grid-template-columns:1fr}.panel{padding:14px}.remove{padding:9px}.metric .value{font-size:28px}.qty-btn{padding:8px 4px;font-size:13px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ポケポケ対戦確率計算シミュレーター(β)</h1>
+  <p class="lead">初期手札は「最低1枚たねポケモンが入る」条件を反映した5枚から開始し、2ターン目まで、博士の研究またはモノマネむすめとモンスターボールを実際の使用順で処理して、入力したカードから複数選んだ「狙うカード」をすべて1枚以上そろえられる確率を比較します。</p>
+
+  <section class="panel">
+    <div class="topbar">
+      <div><strong>デッキ入力</strong> <span class="badge">20枚固定</span><div class="special-note">最大20種類まで入力できます。各カードは1枚/2枚。「モノマネむすめ」「博士の研究」「モンスターボール」はカード名の完全一致で個別処理します。</div></div>
+      <div id="deckCount" class="count ng">0 / 20枚・0 / 20種類</div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="grid" id="deckGrid"><div class="header">カード名</div><div class="header">枚数</div><div class="header">分類</div><div></div></div>
+    <div class="actions"><button class="secondary" id="addRowBtn">＋ カードを追加</button><button class="secondary" id="sampleBtn">サンプル</button><button class="danger" id="clearBtn">クリア</button></div>
+  </section>
+
+  <section class="panel">
+    <h2>シミュレーション設定</h2>
+    <div class="settings">
+      <label class="box"><span>試行回数</span><select id="trials"><option value="10000">10,000回</option><option value="50000">50,000回</option><option value="100000" selected>100,000回</option><option value="500000">500,000回</option></select></label>
+      <div class="box"><span>狙うカード</span><strong id="targetCountLabel">0種類選択</strong><div class="tiny">下のチェックボックスから複数選択</div></div>
+      <label class="box"><span>使うドローサポート</span><select id="support"><option value="prof" selected>博士の研究</option><option value="copy">モノマネむすめ</option><option value="besthand">使用後の手札が多い方</option><option value="none">使わない</option></select></label>
+    </div>
+
+    <div class="settings" style="margin-top:10px">
+      <label class="box" id="copyOppBox"><span>モノマネむすめ：相手手札</span><select id="copyOpp"><option value="2">2枚</option><option value="3" selected>3枚</option><option value="4">4枚</option></select></label>
+      <label class="box"><span>サポート＋モンボの使用順</span><select id="order"><option value="support-ball" selected>サポート → モンスターボール</option><option value="ball-support">モンスターボール → サポート</option></select></label>
+      <div class="box"><span>初期手札</span><strong>5枚・たね1枚以上保証</strong><div class="tiny">たね0枚の初手は引き直しとして除外します。</div></div>
+    </div>
+
+    <div class="target-panel">
+      <div class="target-panel-head">
+        <div><strong>狙うカード（複数選択可）</strong><div class="tiny">入力済みの全カード（たね・進化・トレーナーズ）から複数選択できます。チェックしたカードを各1枚以上、同時に手札へそろえた時点で成功です。</div></div>
+        <div class="mini-actions"><button type="button" class="secondary" id="selectAllTargetsBtn">全カードを選択</button><button type="button" class="secondary" id="selectBasicsBtn">たねだけ選択</button><button type="button" class="secondary" id="clearTargetsBtn">選択解除</button></div>
+      </div>
+      <div id="targetList" class="target-list"><div class="target-empty">カード名を入力するとここに表示されます。</div></div>
+    </div>
+
+    <div class="switches">
+      <label class="toggle"><input type="checkbox" id="useInitialDraw" checked><span>初期ドロー<small>初期5枚のあと山札から1枚引く</small></span></label>
+      <label class="toggle"><input type="checkbox" id="useBall" checked><span>モンスターボール<small>手札にあれば最大2枚まで順に使用。各1枚で山札のたねをランダム取得</small></span></label>
+      <label class="toggle"><input type="checkbox" id="useTurn2Draw" checked><span>2ターン目ドロー<small>特殊カード処理後に山札から1枚引く</small></span></label>
+    </div>
+
+    <div id="flowText" class="flow"><strong>現在の処理順</strong><span></span></div>
+    <div class="actions"><button id="runBtn">シミュレーション実行</button><button class="secondary" id="saveBtn">このデッキを端末に保存</button></div>
+    <div id="validation" class="status"></div>
+  </section>
+
+  <section class="panel" id="resultPanel" style="display:none">
+    <h2>選択中の設定の結果</h2>
+    <div class="results">
+      <div class="metric"><div class="name">初期5枚（たね保証）</div><div id="openingValue" class="value">-</div><div id="openingSub" class="sub">-</div><div class="bar"><div id="openingBar" class="fill"></div></div></div>
+      <div class="metric"><div class="name">初期ドロー後</div><div id="initialDrawValue" class="value">-</div><div class="sub">初期ドローOFFなら初期5枚と同じ</div><div class="bar"><div id="initialDrawBar" class="fill"></div></div></div>
+      <div class="metric"><div class="name">サポート＋モンボ処理後</div><div id="actionsValue" class="value">-</div><div id="actionsSub" class="sub">-</div><div class="bar"><div id="actionsBar" class="fill"></div></div></div>
+      <div class="metric primary"><div class="name">2ターン目までの総合成功率</div><div id="turn2Value" class="value">-</div><div id="turn2Sub" class="sub">-</div><div class="bar"><div id="turn2Bar" class="fill"></div></div></div>
+    </div>
+
+    <h3>博士 or モノマネ ＋ モンボ最大2枚：使用順比較</h3>
+    <p class="tiny">現在の「初期ドロー」「2ターン目ドロー」設定を共通で使い、組み合わせと使用順だけを変えて比較します。成功した時点で以後のカードは使いません。</p>
+    <div class="compare-wrap">
+      <table class="compare">
+        <thead><tr><th>ドローサポート</th><th>使用順</th><th>特殊処理後</th><th>2ターン目まで</th></tr></thead>
+        <tbody>
+          <tr><td>博士の研究</td><td>博士 → モンボ最大2枚</td><td id="cmpProfFirstActions" class="rate">-</td><td id="cmpProfFirstTurn2" class="rate">-</td></tr>
+          <tr><td>博士の研究</td><td>モンボ最大2枚 → 博士</td><td id="cmpBallFirstProfActions" class="rate">-</td><td id="cmpBallFirstProfTurn2" class="rate">-</td></tr>
+          <tr><td>モノマネむすめ（相手2枚）</td><td>モノマネ → モンボ最大2枚</td><td id="cmpCopy2FirstActions" class="rate">-</td><td id="cmpCopy2FirstTurn2" class="rate">-</td></tr>
+          <tr><td>モノマネむすめ（相手2枚）</td><td>モンボ最大2枚 → モノマネ</td><td id="cmpBallFirstCopy2Actions" class="rate">-</td><td id="cmpBallFirstCopy2Turn2" class="rate">-</td></tr>
+          <tr><td>モノマネむすめ（相手3枚）</td><td>モノマネ → モンボ最大2枚</td><td id="cmpCopy3FirstActions" class="rate">-</td><td id="cmpCopy3FirstTurn2" class="rate">-</td></tr>
+          <tr><td>モノマネむすめ（相手3枚）</td><td>モンボ最大2枚 → モノマネ</td><td id="cmpBallFirstCopy3Actions" class="rate">-</td><td id="cmpBallFirstCopy3Turn2" class="rate">-</td></tr>
+          <tr><td>モノマネむすめ（相手4枚）</td><td>モノマネ → モンボ最大2枚</td><td id="cmpCopy4FirstActions" class="rate">-</td><td id="cmpCopy4FirstTurn2" class="rate">-</td></tr>
+          <tr><td>モノマネむすめ（相手4枚）</td><td>モンボ最大2枚 → モノマネ</td><td id="cmpBallFirstCopy4Actions" class="rate">-</td><td id="cmpBallFirstCopy4Turn2" class="rate">-</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p id="bestOrder" class="status good"></p>
+    <p id="summary" class="status good"></p>
+
+    <div class="example-box">
+      <div class="example-head">
+        <div><h3>シミュレーション結果の一例</h3><div class="tiny">現在の設定で実際に1回だけ抽選した流れです。確率の代表値ではなく、起こり得る1試行を具体的に表示します。</div></div>
+        <button type="button" class="secondary" id="rerollExampleBtn">別の一例を見る</button>
+      </div>
+      <div id="exampleResult" class="example-result">-</div>
+      <div id="exampleSteps" class="example-steps" aria-live="polite"></div>
+    </div>
+
+    <details>
+      <summary>このサイトでの処理ルール</summary>
+      <div class="tiny">
+        <p>① 山札20枚から重複なしで初期5枚を引き、「たね」が0枚だった初手は無効として引き直します。初期手札には必ず最低1枚のたねが入ります。</p>
+        <p>② 「初期ドロー」がONなら、初期5枚のあと山札から1枚引きます。</p>
+        <p>③ 博士の研究：手札にあれば1枚使用して、山札から2枚引きます。</p>
+        <p>④ モノマネむすめ：手札にあれば1枚使用。使用したモノマネむすめ自身は戻さず、それ以外の現在の手札を山札へ戻し、相手手札設定の2/3/4枚を引き直します。</p>
+        <p>⑤ モンスターボール：手札にあれば最大2枚まで順番に使用します。1枚使うごとに、山札に残っている「たね」からランダムに1枚を手札へ加えます。1枚目で2枚目の使用前に狙うカードがすべてそろった場合はそこで成功確定です。</p>
+        <p>⑥ サポートとモンボは設定した順番で処理します。たとえば「博士→モンボ」では、博士で引いたモンボも含め、その時点で手札にあるモンボを最大2枚まで続けて使えます。「モンボ→博士」では、先に使えるモンボを最大2枚処理してから博士を使うため、博士で後から引いたモンボはその順番では使いません。</p>
+        <p>⑦ 「モンボ→モノマネ」では、モンボで取ったカードもその時点の手札に含まれるため、狙い未達ならモノマネで手札を戻す対象になります。</p>
+        <p>⑧ 「使用後の手札が多い方」は、博士の研究とモノマネむすめの両方が使用可能なら、使用直後の手札枚数を事前計算して多くなる方を使います。同数なら、現在の手札や後続のモンスターボールを保持できる博士の研究を優先します。片方しか使えない場合は使える方を使用します。</p>
+        <p>⑨ チェックした「狙うカード」を各1枚以上、同時に手札へそろえた時点で、その試行は成功として確定し、残りの処理は行いません。狙うカードに博士・モノマネ・モンボ自身を含めた場合は、必要な最後の1枚を自動使用せず手札に残します（2枚ある場合は1枚だけ使用可能）。</p>
+        <p>⑩ 「2ターン目ドロー」がONなら、特殊カード処理後に山札から1枚引き、その時点までの成功率も表示します。</p>
+      </div>
+    </details>
+  </section>
+
+  <footer class="site-footer">
+    <p>© 2026 ポケポケ対戦確率計算シミュレーター(β). All Rights Reserved.</p>
+    <p>本サイトは非公式のファンメイドツールです。Pokémonおよび関連する名称・商標等の権利は各権利者に帰属します。</p>
+  </footer>
+</div>
+<script>
+const grid=document.getElementById('deckGrid');
+const deckCount=document.getElementById('deckCount');
+const validation=document.getElementById('validation');
+const resultPanel=document.getElementById('resultPanel');
+const targetList=document.getElementById('targetList');
+const targetCountLabel=document.getElementById('targetCountLabel');
+const MAX_ROWS=20;
+const supportSelect=document.getElementById('support');
+const copyOppBox=document.getElementById('copyOppBox');
+const SPECIAL=new Set(['モノマネむすめ','博士の研究','モンスターボール']);
+
+function addRow(data={name:'',qty:1,type:'たね'}){
+  if(rowCount()>=MAX_ROWS){updateAddRowState();return;}
+  const name=document.createElement('input');name.placeholder='例：ピカチュウ';name.value=data.name||'';name.dataset.role='name';
+  const qty=document.createElement('div');qty.className='qty-buttons';qty.dataset.role='qty';qty.dataset.value=String(data.qty===2?2:1);qty.setAttribute('role','group');qty.setAttribute('aria-label','枚数');
+  for(const v of [1,2]){
+    const b=document.createElement('button');b.type='button';b.className='qty-btn';b.dataset.value=String(v);b.textContent=`${v}枚`;b.setAttribute('aria-pressed',qty.dataset.value===String(v)?'true':'false');
+    if(qty.dataset.value===String(v))b.classList.add('active');
+    b.addEventListener('click',()=>{qty.dataset.value=String(v);[...qty.querySelectorAll('.qty-btn')].forEach(x=>{const on=x.dataset.value===String(v);x.classList.toggle('active',on);x.setAttribute('aria-pressed',on?'true':'false')});updateCount();refreshTargetChecks();autosave();});
+    qty.appendChild(b);
+  }
+  const type=document.createElement('select');type.innerHTML='<option>たね</option><option>進化</option><option>トレーナーズ</option>';type.value=data.type||'たね';type.dataset.role='type';
+  const del=document.createElement('button');del.className='remove';del.textContent='×';del.title='削除';del.type='button';del.dataset.role='del';
+  for(const el of [name,qty,type,del])grid.appendChild(el);
+  const syncName=()=>{if(SPECIAL.has(name.value.trim()))type.value='トレーナーズ';updateCount();refreshTargetChecks();autosave();};
+  name.addEventListener('input',syncName);
+  type.addEventListener('change',()=>{refreshTargetChecks();autosave();});
+  del.addEventListener('click',()=>{name.remove();qty.remove();type.remove();del.remove();updateCount();refreshTargetChecks();updateAddRowState();autosave();});
+  updateCount();refreshTargetChecks();updateAddRowState();
+}
+function getRows(){
+  const names=[...grid.querySelectorAll('[data-role="name"]')],qtys=[...grid.querySelectorAll('[data-role="qty"]')],types=[...grid.querySelectorAll('[data-role="type"]')];
+  return names.map((n,i)=>({name:n.value.trim(),qty:+(qtys[i].dataset.value||1),type:types[i].value}));
+}
+function activeRows(){return getRows().filter(r=>r.name)}
+function rowCount(){return grid.querySelectorAll('[data-role="name"]').length}
+function totalCards(){return activeRows().reduce((s,r)=>s+r.qty,0)}
+function updateCount(){const n=totalCards(),k=activeRows().length;deckCount.textContent=`${n} / 20枚・${k} / 20種類`;deckCount.className='count '+(n===20?'ok':'ng')}
+function updateAddRowState(){const b=document.getElementById('addRowBtn');if(!b)return;b.disabled=rowCount()>=MAX_ROWS;b.textContent=b.disabled?'入力欄は20種類まで':'＋ カードを追加'}
+function clearRows(){[...grid.querySelectorAll('[data-role]')].forEach(x=>x.remove());updateCount();refreshTargetChecks();updateAddRowState()}
+function autosave(){try{localStorage.setItem('pokepokeDeckDraft',JSON.stringify(getRows()));localStorage.setItem('pokepokeTargets',JSON.stringify(getSelectedTargets()))}catch{}}
+function loadDraft(){try{const x=JSON.parse(localStorage.getItem('pokepokeDeckDraft'));if(Array.isArray(x)&&x.length){clearRows();x.slice(0,MAX_ROWS).forEach(addRow);while(rowCount()<MAX_ROWS)addRow();return true}}catch{}return false}
+function getSelectedTargets(){return [...targetList.querySelectorAll('input[type="checkbox"]:checked')].map(x=>x.value)}
+function getStoredTargets(){try{const x=JSON.parse(localStorage.getItem('pokepokeTargets'));return Array.isArray(x)?x:[]}catch{return[]}}
+function refreshTargetChecks(){
+  const current=new Set(getSelectedTargets());
+  const stored=new Set(getStoredTargets());
+  const rows=activeRows();
+  const unique=[];
+  const seen=new Set();
+  for(const r of rows){if(!seen.has(r.name)){seen.add(r.name);unique.push({name:r.name,type:r.type})}}
+  targetList.innerHTML='';
+  if(!unique.length){targetList.innerHTML='<div class="target-empty">カード名を入力するとここに表示されます。</div>';targetCountLabel.textContent='0種類選択';return}
+  for(const r of unique){
+    const label=document.createElement('label');label.className='target-check';
+    const cb=document.createElement('input');cb.type='checkbox';cb.value=r.name;
+    cb.checked=current.has(r.name)||stored.has(r.name);
+    cb.addEventListener('change',()=>{updateTargetCount();autosave()});
+    const span=document.createElement('span');span.textContent=`${r.name}（${r.type}）`;span.title=span.textContent;
+    label.append(cb,span);targetList.appendChild(label);
+  }
+  updateTargetCount();
+}
+function updateTargetCount(){const n=getSelectedTargets().length;targetCountLabel.textContent=`${n}種類選択`}
+function buildDeck(){const deck=[];activeRows().forEach((r,ri)=>{for(let k=0;k<r.qty;k++)deck.push({name:r.name,type:r.type,id:`${ri}-${k}`})});return deck}
+function validate(){
+  const rows=activeRows(),total=rows.reduce((s,r)=>s+r.qty,0),errs=[];
+  if(total!==20)errs.push(`合計を20枚にしてください（現在${total}枚）`);
+  for(const sp of SPECIAL){const row=rows.find(r=>r.name===sp);if(row&&row.type!=='トレーナーズ')errs.push(`${sp} はトレーナーズにしてください`)}
+  const counts={};rows.forEach(r=>counts[r.name]=(counts[r.name]||0)+r.qty);
+  const over=Object.entries(counts).filter(([n,q])=>n&&q>2);if(over.length)errs.push(`同名カードが2枚を超えています: ${over.map(x=>x[0]).join('、')}`);
+  if(!rows.some(r=>r.type==='たね'))errs.push('「たね」が0枚です');
+  if(getSelectedTargets().length===0)errs.push('狙うカードを1種類以上チェックしてください');
+  return errs;
+}
+function randInt(max){return Math.floor(Math.random()*max)}
+function drawOne(deck){if(!deck.length)return null;const j=randInt(deck.length);const c=deck[j];deck[j]=deck[deck.length-1];deck.pop();return c}
+function drawMany(deck,n){const out=[];for(let i=0;i<n&&deck.length;i++){const c=drawOne(deck);if(c)out.push(c)}return out}
+function createTrial(deck){
+  // ポケポケの初期手札条件として「5枚の中に最低1枚たね」を保証する。
+  // たねを先に1枚固定して残り4枚を引くと複数たねの確率が偏るため、
+  // 通常の5枚抽選を行い、たね0枚の初手だけ引き直す（条件付き抽選）。
+  if(!deck.some(c=>c.type==='たね'))return{deck:deck.slice(),hand:[]};
+  while(true){
+    const d=deck.slice(),hand=drawMany(d,5);
+    if(hand.some(c=>c.type==='たね'))return{deck:d,hand};
+  }
+}
+function hasName(cards,name){return cards.some(c=>c.name===name)}
+function countName(cards,name){let n=0;for(const c of cards)if(c.name===name)n++;return n}
+function removeOne(cards,name){const i=cards.findIndex(c=>c.name===name);if(i<0)return null;return cards.splice(i,1)[0]}
+function targetComplete(cards,targets){
+  const list=targets instanceof Set?[...targets]:targets;
+  if(!list.length)return false;
+  return list.every(name=>hasName(cards,name));
+}
+function canSpendTargetCopy(cards,name,targets){
+  const set=targets instanceof Set?targets:new Set(targets);
+  return !set.has(name)||countName(cards,name)>=2;
+}
+function targetLabel(targets){return targets.length<=3?targets.join(' / '):`${targets.slice(0,3).join(' / ')} ほか${targets.length-3}種類`}
+function useProfessor(state,targets){
+  if(!hasName(state.hand,'博士の研究')||!canSpendTargetCopy(state.hand,'博士の研究',targets))return false;
+  removeOne(state.hand,'博士の研究');
+  state.hand.push(...drawMany(state.deck,2));
+  return true;
+}
+function useCopycat(state,n,targets){
+  if(!hasName(state.hand,'モノマネむすめ')||!canSpendTargetCopy(state.hand,'モノマネむすめ',targets))return false;
+  removeOne(state.hand,'モノマネむすめ');
+  state.deck.push(...state.hand);
+  state.hand=[];
+  state.hand.push(...drawMany(state.deck,n));
+  return true;
+}
+function useBall(state,targets){
+  if(!hasName(state.hand,'モンスターボール')||!canSpendTargetCopy(state.hand,'モンスターボール',targets))return false;
+  const basicIdx=[];state.deck.forEach((c,i)=>{if(c.type==='たね')basicIdx.push(i)});
+  if(!basicIdx.length)return false;
+  removeOne(state.hand,'モンスターボール');
+  const pickIndex=basicIdx[randInt(basicIdx.length)],picked=state.deck[pickIndex];
+  state.deck[pickIndex]=state.deck[state.deck.length-1];state.deck.pop();state.hand.push(picked);
+  return true;
+}
+function useBalls(state,targets,maxUses=2){
+  let used=0;
+  while(used<maxUses&&!targetComplete(state.hand,targets)){
+    if(!useBall(state,targets))break;
+    used++;
+  }
+  return used;
+}
+function pct(x,n){return n?100*x/n:0}
+function fmt(v){return v.toFixed(2)+'%'}
+function setMetric(id,barId,v){document.getElementById(id).textContent=fmt(v);if(barId)document.getElementById(barId).style.width=Math.max(0,Math.min(100,v))+'%'}
+function supportName(kind,n){if(kind==='prof')return '博士の研究';if(kind==='copy')return `モノマネむすめ（相手${n}枚）`;if(kind==='besthand')return `使用後の手札が多い方（相手${n}枚）`;return 'サポートなし'}
+function usableSupport(state,name,targets){return hasName(state.hand,name)&&canSpendTargetCopy(state.hand,name,targets)}
+function projectedProfessorHandSize(state){return state.hand.length-1+Math.min(2,state.deck.length)}
+function projectedCopycatHandSize(state,n){return Math.min(n,state.deck.length+state.hand.length-1)}
+function useBestHandSupport(state,copyN,targets){
+  const profOK=usableSupport(state,'博士の研究',targets);
+  const copyOK=usableSupport(state,'モノマネむすめ',targets);
+  if(!profOK&&!copyOK)return false;
+  if(profOK&&!copyOK)return useProfessor(state,targets);
+  if(copyOK&&!profOK)return useCopycat(state,copyN,targets);
+  const profSize=projectedProfessorHandSize(state);
+  const copySize=projectedCopycatHandSize(state,copyN);
+  if(copySize>profSize)return useCopycat(state,copyN,targets);
+  return useProfessor(state,targets);
+}
+function useSupport(state,kind,copyN,targets){if(kind==='prof')return useProfessor(state,targets);if(kind==='copy')return useCopycat(state,copyN,targets);if(kind==='besthand')return useBestHandSupport(state,copyN,targets);return false}
+
+function chooseBestHandSupport(state,copyN,targets){
+  const profOK=usableSupport(state,'博士の研究',targets);
+  const copyOK=usableSupport(state,'モノマネむすめ',targets);
+  if(!profOK&&!copyOK)return null;
+  if(profOK&&!copyOK)return 'prof';
+  if(copyOK&&!profOK)return 'copy';
+  return projectedCopycatHandSize(state,copyN)>projectedProfessorHandSize(state)?'copy':'prof';
+}
+function compactCards(cards){
+  if(!cards.length)return 'なし';
+  const map=new Map();
+  for(const c of cards)map.set(c.name,(map.get(c.name)||0)+1);
+  return [...map.entries()].map(([name,n])=>n>1?`${name}×${n}`:name).join('、');
+}
+function missingTargets(hand,targets){return targets.filter(name=>!hasName(hand,name))}
+function traceProfessor(state,targets){
+  if(!hasName(state.hand,'博士の研究'))return{used:false,detail:'手札に博士の研究がないため使用せず'};
+  if(!canSpendTargetCopy(state.hand,'博士の研究',targets))return{used:false,detail:'博士の研究自身が狙うカードとして必要なため使用せず'};
+  removeOne(state.hand,'博士の研究');
+  const drawn=drawMany(state.deck,2);state.hand.push(...drawn);
+  return{used:true,detail:`博士の研究を使用し、${drawn.length}枚ドロー：${compactCards(drawn)}`};
+}
+function traceCopycat(state,n,targets){
+  if(!hasName(state.hand,'モノマネむすめ'))return{used:false,detail:'手札にモノマネむすめがないため使用せず'};
+  if(!canSpendTargetCopy(state.hand,'モノマネむすめ',targets))return{used:false,detail:'モノマネむすめ自身が狙うカードとして必要なため使用せず'};
+  removeOne(state.hand,'モノマネむすめ');
+  const returned=state.hand.slice();state.deck.push(...returned);state.hand=[];
+  const drawn=drawMany(state.deck,n);state.hand.push(...drawn);
+  return{used:true,detail:`モノマネむすめを使用。${returned.length}枚を山札へ戻し、相手手札${n}枚に合わせて${drawn.length}枚ドロー：${compactCards(drawn)}`};
+}
+function traceSupport(state,kind,copyN,targets){
+  let actual=kind;
+  if(kind==='besthand')actual=chooseBestHandSupport(state,copyN,targets);
+  if(actual==='prof'){const r=traceProfessor(state,targets);return{...r,label:kind==='besthand'&&r.used?'手札が多くなる方 → 博士の研究':'博士の研究'}}
+  if(actual==='copy'){const r=traceCopycat(state,copyN,targets);return{...r,label:kind==='besthand'&&r.used?`手札が多くなる方 → モノマネむすめ（相手${copyN}枚）`:`モノマネむすめ（相手${copyN}枚）`}}
+  return{used:false,label:kind==='besthand'?'使用後の手札が多い方':'サポート',detail:kind==='besthand'?'使用できる博士の研究・モノマネむすめがないため使用せず':'サポートを使用せず'};
+}
+function traceBalls(state,targets,maxUses=2){
+  const logs=[];
+  const snap=text=>logs.push({text,hand:state.hand.slice(),deckCount:state.deck.length,complete:targetComplete(state.hand,targets),missing:missingTargets(state.hand,targets)});
+  for(let useNo=1;useNo<=maxUses;useNo++){
+    if(targetComplete(state.hand,targets))break;
+    if(!hasName(state.hand,'モンスターボール')){snap(`モンボ${useNo}枚目：手札にないため使用せず`);break}
+    if(!canSpendTargetCopy(state.hand,'モンスターボール',targets)){snap(`モンボ${useNo}枚目：モンスターボール自身が狙うカードとして必要なため使用せず`);break}
+    const basicIdx=[];state.deck.forEach((c,i)=>{if(c.type==='たね')basicIdx.push(i)});
+    if(!basicIdx.length){snap(`モンボ${useNo}枚目：山札にたねがないため使用せず`);break}
+    removeOne(state.hand,'モンスターボール');
+    const pickIndex=basicIdx[randInt(basicIdx.length)],picked=state.deck[pickIndex];
+    state.deck[pickIndex]=state.deck[state.deck.length-1];state.deck.pop();state.hand.push(picked);
+    snap(`モンボ${useNo}枚目を使用 → 山札のたねから「${picked.name}」を取得`);
+  }
+  return logs;
+}
+function runTrialTrace(deck,targets,opts){
+  const s=createTrial(deck);
+  const steps=[];
+  const add=(title,detail)=>steps.push({title,detail,hand:s.hand.slice(),deckCount:s.deck.length,complete:targetComplete(s.hand,targets),missing:missingTargets(s.hand,targets)});
+  add('初期手札5枚',`たね1枚以上保証で抽選：${compactCards(s.hand)}`);
+  if(targetComplete(s.hand,targets))return{success:true,steps,hand:s.hand.slice()};
+  if(opts.initialDraw){const c=drawOne(s.deck);if(c)s.hand.push(c);add('初期ドロー',c?`「${c.name}」を1枚ドロー`:'山札がないためドローなし');if(targetComplete(s.hand,targets))return{success:true,steps,hand:s.hand.slice()}}
+  const actionOrder=opts.order==='support-ball'?['support','ball']:['ball','support'];
+  for(const action of actionOrder){
+    if(targetComplete(s.hand,targets))break;
+    if(action==='support'&&opts.support!=='none'){const r=traceSupport(s,opts.support,opts.copyN,targets);add(r.label,r.detail)}
+    if(action==='ball'&&opts.ball){const logs=traceBalls(s,targets,2);if(logs.length){for(const log of logs)steps.push({title:'モンスターボール',detail:log.text,hand:log.hand,deckCount:log.deckCount,complete:log.complete,missing:log.missing})}else add('モンスターボール','狙うカードがすでにそろっているため使用せず')}
+  }
+  if(targetComplete(s.hand,targets))return{success:true,steps,hand:s.hand.slice()};
+  if(opts.turn2Draw){const c=drawOne(s.deck);if(c)s.hand.push(c);add('2ターン目ドロー',c?`「${c.name}」を1枚ドロー`:'山札がないためドローなし')}
+  return{success:targetComplete(s.hand,targets),steps,hand:s.hand.slice()};
+}
+function renderExample(deck,targets,opts){
+  const ex=runTrialTrace(deck,targets,opts),result=document.getElementById('exampleResult'),host=document.getElementById('exampleSteps');
+  result.className='example-result '+(ex.success?'good':'bad');
+  result.textContent=ex.success?'成功例：狙うカードがすべてそろいました':'失敗例：この1試行では狙うカードがすべてはそろいませんでした';
+  host.innerHTML='';
+  ex.steps.forEach((st,i)=>{
+    const box=document.createElement('div');box.className='example-step';
+    const title=document.createElement('div');title.className='example-step-title';title.textContent=`${i+1}. ${st.title}`;
+    const detail=document.createElement('div');detail.className='example-step-detail';detail.textContent=st.detail;
+    const hand=document.createElement('div');hand.className='example-hand';const strong=document.createElement('strong');strong.textContent='手札：';hand.append(strong,document.createTextNode(`${compactCards(st.hand)}（${st.hand.length}枚） / 山札残り${st.deckCount}枚`));
+    const target=document.createElement('div');target.className='example-target '+(st.complete?'done':'');target.textContent=st.complete?'✓ 狙うカードがすべてそろった':`未完成：あと ${st.missing.join('、')||'なし'}`;
+    box.append(title,detail,hand,target);host.appendChild(box);
+  });
+}
+function currentOptions(){return{
+  initialDraw:document.getElementById('useInitialDraw').checked,
+  turn2Draw:document.getElementById('useTurn2Draw').checked,
+  ball:document.getElementById('useBall').checked,
+  support:supportSelect.value,
+  copyN:+document.getElementById('copyOpp').value,
+  order:document.getElementById('order').value
+}}
+
+function runTrial(deck,target,opts){
+  const s=createTrial(deck);
+  const checkpoints={opening:targetComplete(s.hand,target),initial:false,actions:false,turn2:false};
+  if(checkpoints.opening){checkpoints.initial=checkpoints.actions=checkpoints.turn2=true;return checkpoints}
+
+  if(opts.initialDraw){const c=drawOne(s.deck);if(c)s.hand.push(c)}
+  checkpoints.initial=targetComplete(s.hand,target);
+  if(checkpoints.initial){checkpoints.actions=checkpoints.turn2=true;return checkpoints}
+
+  const actionOrder=opts.order==='support-ball'?['support','ball']:['ball','support'];
+  for(const action of actionOrder){
+    if(targetComplete(s.hand,target))break;
+    if(action==='support'&&opts.support!=='none')useSupport(s,opts.support,opts.copyN,target);
+    if(action==='ball'&&opts.ball)useBalls(s,target,2);
+  }
+
+  checkpoints.actions=targetComplete(s.hand,target);
+  if(checkpoints.actions){checkpoints.turn2=true;return checkpoints}
+  if(opts.turn2Draw){const c=drawOne(s.deck);if(c)s.hand.push(c)}
+  checkpoints.turn2=targetComplete(s.hand,target);
+  return checkpoints;
+}
+
+function updateFlow(){
+  const steps=['初期5枚（たね1枚以上保証）'];
+  if(document.getElementById('useInitialDraw').checked)steps.push('初期ドロー1枚');
+  const support=supportSelect.value,copyN=+document.getElementById('copyOpp').value,ball=document.getElementById('useBall').checked,order=document.getElementById('order').value;
+  copyOppBox.classList.toggle('hidden',support!=='copy'&&support!=='besthand');
+  const sLabel=supportName(support,copyN);
+  const actions=order==='support-ball'?[['support',sLabel,support!=='none'],['ball','モンスターボール（最大2枚）',ball]]:[['ball','モンスターボール（最大2枚）',ball],['support',sLabel,support!=='none']];
+  actions.forEach(([,label,on])=>{if(on)steps.push(label)});
+  if(document.getElementById('useTurn2Draw').checked)steps.push('2ターン目ドロー1枚');
+  document.querySelector('#flowText span').textContent=steps.join(' → ');
+}
+
+function compareScenarios(deck,target,N,baseOpts){
+  const defs=[
+    {key:'cmpProfFirst',label:'博士 → モンボ最大2枚',support:'prof',copyN:3,order:'support-ball'},
+    {key:'cmpBallFirstProf',label:'モンボ最大2枚 → 博士',support:'prof',copyN:3,order:'ball-support'},
+    {key:'cmpCopy2First',label:'モノマネ(2) → モンボ最大2枚',support:'copy',copyN:2,order:'support-ball'},
+    {key:'cmpBallFirstCopy2',label:'モンボ最大2枚 → モノマネ(2)',support:'copy',copyN:2,order:'ball-support'},
+    {key:'cmpCopy3First',label:'モノマネ(3) → モンボ最大2枚',support:'copy',copyN:3,order:'support-ball'},
+    {key:'cmpBallFirstCopy3',label:'モンボ最大2枚 → モノマネ(3)',support:'copy',copyN:3,order:'ball-support'},
+    {key:'cmpCopy4First',label:'モノマネ(4) → モンボ最大2枚',support:'copy',copyN:4,order:'support-ball'},
+    {key:'cmpBallFirstCopy4',label:'モンボ最大2枚 → モノマネ(4)',support:'copy',copyN:4,order:'ball-support'}
+  ];
+  const sums=Object.fromEntries(defs.map(d=>[d.key,{actions:0,turn2:0}]));
+  for(let i=0;i<N;i++){
+    for(const d of defs){
+      const r=runTrial(deck,target,{initialDraw:baseOpts.initialDraw,turn2Draw:baseOpts.turn2Draw,ball:true,support:d.support,copyN:d.copyN,order:d.order});
+      if(r.actions)sums[d.key].actions++;
+      if(r.turn2)sums[d.key].turn2++;
+    }
+  }
+  const results=defs.map(d=>({...d,actions:pct(sums[d.key].actions,N),turn2:pct(sums[d.key].turn2,N)}));
+  let best=-1;
+  for(const r of results)best=Math.max(best,r.turn2);
+  for(const r of results){
+    const a=document.getElementById(r.key+'Actions'),t=document.getElementById(r.key+'Turn2');
+    a.textContent=fmt(r.actions);t.textContent=fmt(r.turn2);
+    a.classList.toggle('best',Math.abs(r.actions-Math.max(...results.map(x=>x.actions)))<1e-9);
+    t.classList.toggle('best',Math.abs(r.turn2-best)<1e-9);
+  }
+  const winners=results.filter(r=>Math.abs(r.turn2-best)<1e-9).map(r=>r.label);
+  document.getElementById('bestOrder').textContent=`比較上の最高値：${winners.join(' / ')} ＝ ${fmt(best)}（2ターン目まで）`;
+}
+
+function runSim(){
+  const errs=validate();
+  if(errs.length){validation.className='status bad';validation.innerHTML=errs.join('<br>');resultPanel.style.display='none';return}
+  validation.className='status good';validation.textContent='計算中…';
+  const deck=buildDeck(),N=+document.getElementById('trials').value,target=getSelectedTargets();
+  const opts=currentOptions();
+  let opening=0,initial=0,actions=0,turn2=0;
+  for(let i=0;i<N;i++){
+    const r=runTrial(deck,target,opts);
+    if(r.opening)opening++;if(r.initial)initial++;if(r.actions)actions++;if(r.turn2)turn2++;
+  }
+  const v={opening:pct(opening,N),initial:pct(initial,N),actions:pct(actions,N),turn2:pct(turn2,N)};
+  setMetric('openingValue','openingBar',v.opening);setMetric('initialDrawValue','initialDrawBar',v.initial);setMetric('actionsValue','actionsBar',v.actions);setMetric('turn2Value','turn2Bar',v.turn2);
+
+  const lbl=targetLabel(target),sLabel=supportName(opts.support,opts.copyN);
+  const orderText=opts.order==='support-ball'?`${sLabel} → モンボ最大2枚`:`モンボ最大2枚 → ${sLabel}`;
+  document.getElementById('openingSub').textContent=`たね1枚以上が保証された初期5枚で、選択したカードをすべて1枚以上そろえる確率`;
+  document.getElementById('actionsSub').textContent=`設定中：${orderText}${opts.ball?'':'（モンボOFF）'}`;
+  document.getElementById('turn2Sub').textContent=`選択したカードをすべて1枚以上、2ターン目までにそろえる総合率`;
+  const targetSet=new Set(target),targetCount=deck.filter(c=>targetSet.has(c.name)).length;
+  document.getElementById('summary').textContent=`狙い：${lbl}（${target.length}種類・デッキ内合計${targetCount}枚）。初期手札はたね1枚以上保証。選択カードをすべて1枚以上そろえる確率：初期5枚 ${fmt(v.opening)} → 初期ドロー後 ${fmt(v.initial)} → 特殊処理後 ${fmt(v.actions)} → 2ターン目まで ${fmt(v.turn2)}。`;
+
+  compareScenarios(deck,target,N,{initialDraw:opts.initialDraw,turn2Draw:opts.turn2Draw});
+  renderExample(deck,target,opts);
+  validation.className='status good';validation.textContent=`${N.toLocaleString()}回 × 使用順比較まで計算しました。下にランダムな1試行の具体例も表示しています。`;
+  resultPanel.style.display='block';resultPanel.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+document.getElementById('addRowBtn').addEventListener('click',()=>addRow());
+document.getElementById('clearBtn').addEventListener('click',()=>{clearRows();for(let i=0;i<MAX_ROWS;i++)addRow();try{localStorage.removeItem('pokepokeTargets')}catch{}refreshTargetChecks();autosave();resultPanel.style.display='none';validation.textContent=''});
+document.getElementById('sampleBtn').addEventListener('click',()=>{clearRows();[
+  {name:'たねポケモンA',qty:2,type:'たね'},{name:'たねポケモンB',qty:2,type:'たね'},{name:'進化ポケモンA',qty:2,type:'進化'},{name:'進化ポケモンB',qty:2,type:'進化'},
+  {name:'モンスターボール',qty:2,type:'トレーナーズ'},{name:'博士の研究',qty:2,type:'トレーナーズ'},{name:'モノマネむすめ',qty:2,type:'トレーナーズ'},
+  {name:'トレーナーズA',qty:2,type:'トレーナーズ'},{name:'トレーナーズB',qty:2,type:'トレーナーズ'},{name:'トレーナーズC',qty:2,type:'トレーナーズ'}
+].forEach(addRow);while(rowCount()<MAX_ROWS)addRow();refreshTargetChecks();[...targetList.querySelectorAll('input[type="checkbox"]')].forEach(cb=>{const row=activeRows().find(r=>r.name===cb.value);cb.checked=!!row&&row.type==='たね'});updateTargetCount();autosave()});
+document.getElementById('selectAllTargetsBtn').addEventListener('click',()=>{[...targetList.querySelectorAll('input[type="checkbox"]')].forEach(cb=>cb.checked=true);updateTargetCount();autosave()});
+document.getElementById('selectBasicsBtn').addEventListener('click',()=>{const rows=activeRows();[...targetList.querySelectorAll('input[type="checkbox"]')].forEach(cb=>{const r=rows.find(x=>x.name===cb.value);cb.checked=!!r&&r.type==='たね'});updateTargetCount();autosave()});
+document.getElementById('clearTargetsBtn').addEventListener('click',()=>{[...targetList.querySelectorAll('input[type="checkbox"]')].forEach(cb=>cb.checked=false);updateTargetCount();autosave()});
+document.getElementById('runBtn').addEventListener('click',runSim);
+document.getElementById('rerollExampleBtn').addEventListener('click',()=>{
+  const errs=validate();if(errs.length){validation.className='status bad';validation.innerHTML=errs.join('<br>');return}
+  renderExample(buildDeck(),getSelectedTargets(),currentOptions());
+});
+document.getElementById('saveBtn').addEventListener('click',()=>{autosave();validation.className='status good';validation.textContent='この端末のブラウザに保存しました。次回も自動で読み込みます。'});
+['useInitialDraw','useBall','useTurn2Draw','order','support','copyOpp'].forEach(id=>document.getElementById(id).addEventListener('change',updateFlow));
+if(!loadDraft()){for(let i=0;i<MAX_ROWS;i++)addRow()}
+while(rowCount()<MAX_ROWS)addRow();
+updateCount();refreshTargetChecks();updateAddRowState();updateFlow();
+</script>
+</body>
+</html>
