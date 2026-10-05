@@ -30,6 +30,8 @@
   .compare-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}.compare{width:100%;border-collapse:collapse;min-width:700px}.compare th,.compare td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}.compare th{font-size:12px;color:var(--muted);background:var(--soft)}.compare td.rate{font-weight:900;font-variant-numeric:tabular-nums}.compare tr:last-child td{border-bottom:0}.compare .best{color:var(--good)}
   .example-box{margin-top:18px;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fbfcff}.example-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}.example-head h3{margin:0 0 4px}.example-result{margin:12px 0 8px;padding:10px 12px;border-radius:10px;font-weight:900}.example-result.good{background:#edf9f4;color:var(--good)}.example-result.bad{background:#fff1f1;color:var(--bad)}.example-steps{display:grid;gap:8px}.example-step{border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:#fff}.example-step-title{font-weight:900}.example-step-detail{font-size:13px;color:var(--muted);margin-top:2px}.example-hand{font-size:13px;margin-top:6px;word-break:break-word}.example-hand strong{color:var(--ink)}.example-target{font-size:12px;font-weight:800;margin-top:5px}.example-target.done{color:var(--good)}
   .site-footer{margin:24px 0 0;padding:18px 8px 4px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:12px}.site-footer p{margin:3px 0}
+
+  .ad-area{margin:22px auto 10px;text-align:center;overflow:hidden}.ad-label{font-size:11px;color:var(--muted);margin-bottom:6px}.ad-slot{display:flex;justify-content:center;align-items:center;min-width:0}
   .hidden{display:none!important}
   @media(max-width:760px){.grid{grid-template-columns:1fr 94px 110px auto;gap:6px}.header{font-size:10px}.settings,.results,.switches,.target-list{grid-template-columns:1fr}.panel{padding:14px}.remove{padding:9px}.metric .value{font-size:28px}.qty-btn{padding:8px 4px;font-size:13px}}
 </style>
@@ -136,6 +138,24 @@
       </div>
     </details>
   </section>
+
+  <!-- Ninja AdMax responsive ad -->
+  <section class="ad-area" aria-label="広告">
+    <div class="ad-label">広告</div>
+    <div class="ad-slot">
+      <script>
+        (function(){
+          var isMobile = window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
+          var adSrc = isMobile
+            ? 'https://adm.shinobi.jp/s/9bd8fed96d868fb0839c312de73b93dc'
+            : 'https://adm.shinobi.jp/s/8605e3e85f8ca413c1575eeb523059f6';
+          document.write('<script src="' + adSrc + '"><\/script>');
+        })();
+      </script>
+      <noscript>広告を表示するにはJavaScriptを有効にしてください。</noscript>
+    </div>
+  </section>
+  <!-- /Ninja AdMax responsive ad -->
 
   <footer class="site-footer">
     <p>© 2026 ポケポケ対戦確率計算シミュレーター(β). All Rights Reserved.</p>
