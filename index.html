@@ -32,6 +32,10 @@ table{width:100%;min-width:0;table-layout:fixed}
 @media(max-width:760px){.wrap{padding:8px 8px 48px}.hero{border-radius:17px}.panel{padding:13px;border-radius:15px}.grid,.metrics{grid-template-columns:1fr 1fr}.target-list{grid-template-columns:1fr}.io{grid-template-columns:1fr}.toolbar .btn{flex:1 1 auto}.deck-head{display:none}#deckBody tr{grid-template-columns:minmax(0,1fr) 98px minmax(112px,.8fr) auto}.compare th,.compare td{padding:7px 5px;font-size:.78rem}}
 @media(max-width:430px){.grid,.metrics{grid-template-columns:1fr}.hero p{font-size:.88rem}#deckBody tr{grid-template-columns:1fr 1fr;gap:7px}#deckBody td:first-child{grid-column:1/-1}#deckBody td:nth-child(3){grid-column:1/2}#deckBody td:nth-child(4){grid-column:2/3;display:flex;justify-content:flex-end}#deckBody .del{width:100%}.qty-toggle{min-width:0}.target{grid-template-columns:minmax(0,1fr) 92px}.compare th:first-child,.compare td:first-child{width:48%}}
 
+.admax-wrap{margin:20px auto 8px;text-align:center;min-height:1px;overflow:hidden}
+.admax-mobile{display:none}
+@media(max-width:760px){.admax-desktop{display:none}.admax-mobile{display:block}}
+
 </style>
 </head>
 <body>
@@ -101,6 +105,18 @@ table{width:100%;min-width:0;table-layout:fixed}
 </section>
 
 
+
+
+<div class="admax-wrap admax-desktop" aria-label="広告">
+<!-- admax -->
+<script src="https://adm.shinobi.jp/s/8605e3e85f8ca413c1575eeb523059f6"></script>
+<!-- admax -->
+</div>
+<div class="admax-wrap admax-mobile" aria-label="広告">
+<!-- admax -->
+<script src="https://adm.shinobi.jp/s/9bd8fed96d868fb0839c312de73b93dc"></script>
+<!-- admax -->
+</div>
 
 <div class="foot" style="text-align:center;border-top:1px solid var(--line);margin-top:18px">
   <div>© 2026 ポケポケ対戦確率シミュレーター(β). All Rights Reserved.</div>
